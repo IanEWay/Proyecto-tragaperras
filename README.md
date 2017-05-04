@@ -15,7 +15,14 @@
 * Altura caja:
 * Ancho motor:
 
-## Divisiones tambor
+### Divisiones tambor
 * 8 caras
-  * 3 secciones (intervalo blanco+negro)
+  * 3 secciones/cara (intervalo blanco+negro)
 * 4 premios
+
+## Perifericos uilizados
+* 3 servos "rapidos" para los tambores
+* 1 servo "lento" para servir monedas
+* 3 sensores de seguimiento
+* 2 detectores de presencia (laser + diodo)
+* Boton
