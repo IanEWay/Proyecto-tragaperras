@@ -24,6 +24,7 @@
 
 ## Perifericos uilizados
 * 3 servos "rapidos" para los tambores
+* 3 encoder
 * 1 servo "lento" para servir monedas
 * 2 detectores de presencia (laser + diodo) para monedas
 * 3 botones para tambor + 1 boton para arranque
