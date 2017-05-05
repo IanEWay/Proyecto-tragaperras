@@ -3,26 +3,28 @@
 
 ## Funcionamiento
 * Introducir moneda
-* Encender LED y esperar a boton (*opcional*)
+* Encender LED y esperar a boton
 * Girar motores
-* Esperar a boton antes de comenzar parada (*opcional*)
+* Pulsar boton para parar cada motor
 * Detencion a intervalos aleatorios
-* Comprobar resultado y repartir premio
+* Si hay credito, boton para avanzar un paso
+* Comprobar resultado y repartir premio en LCD
 
 ## Dimensiones
-* Ancho tambor:
+* Ancho tambor: 5 cm
 * Ancho caja:
 * Altura caja:
-* Ancho motor:
+* Ancho motor: 2 cm
+* Ancho placa: 34 cm
+* Alta placa: 16 cm
 
 ### Divisiones tambor
-* 8 caras
-  * 3 secciones/cara (intervalo blanco+negro)
-* 4 premios
+* 7 caras
+* 3 premios (BAR, campana y frutas)
 
 ## Perifericos uilizados
 * 3 servos "rapidos" para los tambores
 * 1 servo "lento" para servir monedas
-* 3 sensores de seguimiento
-* 2 detectores de presencia (laser + diodo)
-* Boton
+* 2 detectores de presencia (laser + diodo) para monedas
+* 3 botones para tambor + 1 boton para arranque
+* Pantalla LCD
