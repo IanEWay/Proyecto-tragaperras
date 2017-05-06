@@ -1,20 +1,23 @@
 //Proyecto tragaperras
 
 //Pines
-int laser = 2;    //Pin detector moneda
-int LED = 3;      //Pin indicador LED
-int boton = 4;    //Pin boton comienzo
-int botones[] = {18,19,20};  //Pin botones de parada
+int laser = 2;			//Pin detector moneda
+int LED = 3;			//Pin indicador LED
+int boton = 4;			//Pin boton comienzo
+int botones[] = {18,19,20};	//Pin botones de parada
 int motores[] = {52,50,48,46,47,45,43,41,36,34,32,30};  //Pin motores
-int motorP[] = {9,10,11,12};    //Pin motor premio
-int encoders[] = {22,23,24};    //Pin encoders motores
-int sensorP = 13; //Pin sensor premio
+int motorP[] = {9,10,11,12};	//Pin motor premio
+int encoders[] = {22,23,24};	//Pin encoders motores
+int sensorP = 13;		//Pin sensor premio
 
 //Variables
-int divi = 3;     //Divisiones por octavo
-bool gira[] = {0,0,0};  //Variable giro motor
-int premios[] = {1,2,3};  //Valor de los premios
-int monedas = 0;  //Premio monetario
+int divi = 3;     	  //Divisiones por octavo
+bool gira[] = {0,0,0};    //Variable giro motor
+int premios[] = {2,6,8};  //Valor de los premios
+int monedas = 0;  	  //Premio monetario
+int vel = 2300;		  //Velocidad de giro de los motores (us/tic)
+int a = 7;		  //Secciones por tambor
+int b[] = {0,0,0};	  //us/rev max
 
 // StepperMotor class is used to asynchronously
 // drive a stepper motor.  The motor is driven using
@@ -130,18 +133,12 @@ void Motor::doStep() {
 
 //Declarar motores
 Motor *m1 = NULL, *m2 = NULL, *m3 = NULL;
+Motor *mP = NULL
 
 //Funcion interrupcion
 void interrupcion(){
-  if(digitalRead(botones[0]){
-    motor1.steps(0);
-    gira[0] = 0;
-  }else if(digitalRead(botones[1]){
-    motor2.steps(0);
-    gira[1] = 0;
-  }else if(digitalRead(botones[2]){
-    motor3.steps(0);
-    gira[2] = 0;
+  for(int i=0;i<=3;i++){
+    if(botones[i]){gira[i] = 0;}
   }
 }
 
@@ -153,20 +150,16 @@ void setup() {
   pinMode(botones[0],INPUT);
   pinMode(botones[1],INPUT);
   pinMode(botones[2],INPUT);
-  for(int i=0;i<=12;i++){
-    pinMode(motores[i],OUTPUT);
-  }
-  pinMode(motorP[0],OUTPUT);
-  pinMode(motorP[1],OUTPUT);
-  pinMode(motorP[2],OUTPUT);
   pinMode(sensorP,INPUT);
   //Inicializar motores
   m1 = new Motor(motores[0],motores[1],motores[2],motores[3]);
-	m1->setCycleDuration(4600); //Velocidad del motor (us)
-	m2 = new Motor(motores[4],motores[5],motores[6],motores[7]);
-	m2->setCycleDuration(4600);
+  m1->setCycleDuration(vel);
+  m2 = new Motor(motores[4],motores[5],motores[6],motores[7]);
+  m2->setCycleDuration(vel);
   m3 = new Motor(motores[8],motores[9],motores[10],motores[11]);
-  m3->setCycleDuration(4600);
+  m3->setCycleDuration(vel);
+  mP = new Motor(motorP[0],motorP[1],motorP[2],motorP[3]);
+  mP->setCicleDuration(vel/2);
   //Declarar interrupciones
   attachInterrupt(botones[0],interrupcion,RISING);
   attachInterrupt(botones[1],interrupcion,RISING);
@@ -175,15 +168,9 @@ void setup() {
 
 void loop() {
   // Detectar moneda
-  int i=0;
   while(digitalRead(laser)){ //laser==0 -> moneda  
-    i++;
-    if (i==255){
-      i=0;
-    }
   }
-  randomSeed(i);
-  
+
   // LED + boton
   digitalWrite(LED,1);
   while (digitalRead(!boton)){ //boton==1 -> empezar
@@ -197,23 +184,57 @@ void loop() {
     if(gira[0]){m1->tick();}
     if(gira[1]){m2->tick();}
     if(gira[2]){m3->tick();}
+    delayMicroseconds(80);
     //Registrar encoders
-    if(!digitalRead(encoders[0] && m1->TDE < 10000){m1->TDE = 0;}
-    if(!digitalRead(encoders[1] && m2->TDE < 10000){m2->TDE = 0;}
-    if(!digitalRead(encoders[2] && m3->TDE < 10000){m3->TDE = 0;}
+    if(!digitalRead(encoders[0] && m1->TDE < 10000){
+      if(b[0] == 0){b[0]=1;}
+      else if(b[0] == 1){b[0] = m1->TDE;}
+      m1->TDE = 0;
+    }
+    if(!digitalRead(encoders[1] && m2->TDE < 10000){
+      if(b[1] == 0){b[1]=1;}
+      else if(b[1] == 1){b[1] = m2->TDE;}
+      m2->TDE = 0;
+    }
+    if(!digitalRead(encoders[2] && m3->TDE < 10000){
+      if(b[2] == 0){b[2]=1;}
+      else if(b[2] == 1){b[2] = m3->TDE;}
+      m3->TDE = 0;
+    }
   }
+  //Ajustar caras
+       
   //Resultado
     //Calcular posiciones finales
-
-    //Determinar caras
-
+  int pos[3];		//Cara final
+  int bmax = (b[0]+b[1]+b[2])/3;
+  pos[0] = (m1->TDE) * vel * a/bmax;
+  pos[1] = (m2->TDE) * vel * a/bmax;
+  pos[2] = (m3->TDE) * vel * a/bmax;
     //Repartir premios
-
+  int tablaP = [0,0,0,1,0,2,0];	//Fruta = 0, campana = 1, BAR = 2
+  bool x = tablaP[pos[0]] == tablaP[pos[1]];
+  bool y = tablaP[pos[1]] == tablaP[pos[2]];
+  bool z = tablaP[pos[2]] == tablaP[pos[0]];
     //Premio x1
-
+  int pasta = 0;
+  if(x && y){
+    pasta = premios[tablaP[pos[0]]];
+  }else if(x){
     //Premio x0.5
-
+    pasta = premios[tablaP[pos[0]]]/2;
+  }else if(y){
+    pasta = premios[tablaP[pos[1]]]/2;
+  }else if(z){
+    pasta = premios[tablaP[pos[2]]]/2;
+  }
     //Arrancar motor
-    
+  while(pasta){
+    if(!sensorP){	//!Detectamos moneda
+      pasta --;
+    }
+    mP->tick();
+    delayMicroseconds(100)
+  }
 }
 
