@@ -1,22 +1,23 @@
 //Proyecto tragaperras
 
 //Pines
-int laser = 2;			//Pin detector moneda
-int LED = 3;			//Pin indicador LED
-int boton = 4;			//Pin boton comienzo
-int botones[] = {18,19,20};	//Pin botones de parada
+int laser = 2;									//Pin detector moneda
+int LED = 3;										//Pin indicador LED
+int boton = 4;									//Pin boton comienzo
+int botones[] = {18,19,20};			//Pin botones de parada
 int motores[] = {52,50,48,46,47,45,43,41,36,34,32,30};  //Pin motores 1,2,3
-int motorP[] = {9,10,11,12};	//Pin motor premio
-int encoders[] = {22,23,24};	//Pin encoders motores
-int laserP = 13;		//Pin sensor premio
+int motorP[] = {9,10,11,12};		//Pin motor premio
+int encoders[] = {22,23,24};		//Pin encoders motores
+int laserP = 13;								//Pin sensor premio
 
 //Variables
 bool gira[] = {0,0,0};    //Variable giro motor
 int premios[] = {2,6,8};  //Valor de los premios
-int monedas = 0;  	  //Premio monetario
-int vel = 2300;		  //Velocidad de giro de los motores (us/tic)
-int a = 7;		  //Secciones por tambor
-int b[] = {0,0,0};	  //us/rev por tambor
+int monedas = 0;  	  		//Premio monetario
+int vel = 2300;		  			//Velocidad de giro de los motores (us/tic)
+int a = 7;		  					//Secciones por tambor
+int b[] = {0,0,0};	  		//us/rev por tambor
+int offset = 0;						//Ofset para ajustar la pos final
 
 // StepperMotor class is used to asynchronously
 // drive a stepper motor.  The motor is driven using
@@ -207,9 +208,9 @@ void loop() {
     //Calcular posiciones finales
   int pos[3];		//Cara final
   int bmax = (b[0]+b[1]+b[2])/3;
-  pos[0] = (m1->TDE) * vel * a/bmax;
-  pos[1] = (m2->TDE) * vel * a/bmax;
-  pos[2] = (m3->TDE) * vel * a/bmax;
+  pos[0] = (m1->TDE) * vel * a/bmax + offset;
+  pos[1] = (m2->TDE) * vel * a/bmax + offset;
+  pos[2] = (m3->TDE) * vel * a/bmax + offset;
     //Repartir premios
   int tablaP = [0,0,0,1,0,2,0];	//Fruta = 0, campana = 1, BAR = 2
   bool x = tablaP[pos[0]] == tablaP[pos[1]];
