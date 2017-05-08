@@ -1,25 +1,27 @@
 //Proyecto tragaperras
 
 //Pines
-int laser = 2;			//Pin detector moneda
-int LED = 3;			//Pin indicador LED
-int boton = 4;			//Pin boton comienzo
-int botones[] = {18,19,20};	//Pin botones de parada
-int motores[] = {52,50,48,46,47,45,43,41,36,34,32,30};  //Pin motores
-int motorP[] = {9,10,11,12};	//Pin motor premio
-int encoders[] = {22,23,24};	//Pin encoders motores
-int sensorP = 13;		//Pin sensor premio
+int laser = 2;									//Pin detector moneda
+int LED = 3;										//Pin indicador LED
+int boton = 4;									//Pin boton comienzo
+int botones[] = {18,19,20};			//Pin botones de parada
+int motores[] = {52,50,48,46,47,45,43,41,36,34,32,30};  //Pin motores 1,2,3
+int motorP[] = {9,10,11,12};		//Pin motor premio
+int encoders[] = {22,23,24};		//Pin encoders motores
+int laserP = 13;								//Pin sensor premio
 
 //Variables
-int divi = 3;     	  //Divisiones por octavo
 bool gira[] = {0,0,0};    //Variable giro motor
 int premios[] = {2,6,8};  //Valor de los premios
-int monedas = 0;  	  //Premio monetario
-int vel = 2300;		  //Velocidad de giro de los motores (us/tic)
-int a = 7;		  //Secciones por tambor
-int b[] = {0,0,0};	  //tic/rev max
-int nTDE = {0,0,0};	  //Nuevos TDEs para el ajuste fino
-int bmax = 0;	//Tics maximos por rev
+
+int monedas = 0;  	  		//Premio monetario
+int vel = 2300;		  			//Velocidad de giro de los motores (us/tic)
+int a = 7;		  					//Secciones por tambor
+int b[] = {0,0,0};	  		//tic/rev por tambor
+int offset = 0;						//Ofset para ajustar la pos final
+int bmax = 0;	            //Tics maximos por rev
+int nTDE = {0,0,0};	      //Nuevos TDEs para el ajuste fino
+
 
 // StepperMotor class is used to asynchronously
 // drive a stepper motor.  The motor is driven using
@@ -135,7 +137,7 @@ void Motor::doStep() {
 
 //Declarar motores
 Motor *m1 = NULL, *m2 = NULL, *m3 = NULL;
-Motor *mP = NULL
+Motor *mP = NULL;
 
 //Funcion interrupcion
 void interrupcion(){
@@ -170,8 +172,8 @@ void setup() {
   pinMode(botones[0],INPUT);
   pinMode(botones[1],INPUT);
   pinMode(botones[2],INPUT);
-  pinMode(sensorP,INPUT);
-  //Inicializar motores
+  pinMode(laserP,INPUT);
+  //Inicializar motores (configura pines)
   m1 = new Motor(motores[0],motores[1],motores[2],motores[3]);
   m2 = new Motor(motores[4],motores[5],motores[6],motores[7]);
   m3 = new Motor(motores[8],motores[9],motores[10],motores[11]);
@@ -249,11 +251,12 @@ void loop() {
   
 	//Obtener posicion
   int pos[3];		//Cara final
-  pos[0] = (m1->TDE) * a/bmax;	//Posicion = tics * (caras/rev)/(tic/rev)
-  pos[1] = (m2->TDE) * a/bmax;
-  pos[2] = (m3->TDE) * a/bmax;
-	
-  //Resultado
+
+  int bmax = (b[0]+b[1]+b[2])/3;
+  pos[0] = (m1->TDE) * a/bmax + offset;	//Posicion = tics * (caras/rev)/(tic/rev)
+  pos[1] = (m2->TDE) * a/bmax + offset;
+  pos[2] = (m3->TDE) * a/bmax + offset;
+
     //Repartir premios
   int tablaP = [0,0,0,1,0,2,0];	//Fruta = 0, campana = 1, BAR = 2
   bool x = tablaP[pos[0]] == tablaP[pos[1]];
@@ -273,7 +276,7 @@ void loop() {
   }
     //Arrancar motor
   while(pasta){
-    if(!sensorP){	//!Detectamos moneda
+    if(!laserP){	//!Detectamos moneda
       pasta --;
     }
     mP->tick();
