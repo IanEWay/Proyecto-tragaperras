@@ -145,20 +145,26 @@ void interrupcion(){
     if(gira[0] && digitalRead(botones[0])){
       gira[0] = 0;
       if(!truco){
-      	nTDE[0] = (m1->TDE) * 7/bmax + 1;
-      	nTDE[0] = nTDE[0] * bmax/7;
-      }else{nTDE[0] = bmax/7 * truco;}
+      	nTDE[0] = (m1->TDE) * a/bmax + 1;
+				if(nTDE[0] == 8){nTDE[0] = 1;}
+      	nTDE[0] = nTDE[0] * bmax/a + offset;
+      }else{nTDE[0] = bmax/a * truco + offset;}
       m1->setCycleDuration(vel/2);
     }else if(gira[1] && digitalRead(botones[1])){
       gira[1] = 0;
-      nTDE[1] = (m2->TDE) * 7/bmax + 1;
-      nTDE[1] = nTDE[1] * bmax/7;
+    	if(!truco){
+      	nTDE[1] = (m2->TDE) * a/bmax + 1;
+				if(nTDE[1] == 8){nTDE[1] = 1;}
+      	nTDE[1] = nTDE[1] * bmax/a + offset;
+			}else{nTDE[1] = bmax/a * truco + offset;}
       m2->setCycleDuration(vel/2);
     }else if(gira[2] && digitalRead(botones[2])){
       gira[2] = 0;
-      if
-      nTDE[2] = (m3->TDE) * 7/bmax + 1;
-      nTDE[2] = nTDE[2] * bmax/7;
+      if(!truco){
+      	nTDE[2] = (m3->TDE) * a/bmax + 1;
+				if(nTDE[2] == 8){nTDE[2] = 1;}
+      	nTDE[2] = nTDE[2] * bmax/a + offset;
+			}else{nTDE[2] = bmax/a * truco + offset;}
       m3->setCycleDuration(vel/2);
     }
   }
@@ -253,9 +259,10 @@ void loop() {
   int pos[3];		//Cara final
 
   int bmax = (b[0]+b[1]+b[2])/3;
-  pos[0] = (m1->TDE) * a/bmax + offset;	//Posicion = tics * (caras/rev)/(tic/rev)
-  pos[1] = (m2->TDE) * a/bmax + offset;
-  pos[2] = (m3->TDE) * a/bmax + offset;
+  pos[0] = (m1->TDE) * a/bmax + 1;	//Posicion = tics * (caras/rev)/(tic/rev) + 1
+  pos[1] = (m2->TDE) * a/bmax + 1;
+  pos[2] = (m3->TDE) * a/bmax + 1;
+	for(i=0;i<=2;i++){if(pos[i]==8){pos[i]=1;}}	//Correccion
 
     //Repartir premios
   int tablaP = [0,0,0,1,0,2,0];	//Fruta = 0, campana = 1, BAR = 2
