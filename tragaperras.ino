@@ -5,19 +5,18 @@ int laser = 2;			//Pin detector moneda
 int LED = 3;			//Pin indicador LED
 int boton = 4;			//Pin boton comienzo
 int botones[] = {18,19,20};	//Pin botones de parada
-int motores[] = {52,50,48,46,47,45,43,41,36,34,32,30};  //Pin motores
+int motores[] = {52,50,48,46,47,45,43,41,36,34,32,30};  //Pin motores 1,2,3
 int motorP[] = {9,10,11,12};	//Pin motor premio
 int encoders[] = {22,23,24};	//Pin encoders motores
-int sensorP = 13;		//Pin sensor premio
+int laserP = 13;		//Pin sensor premio
 
 //Variables
-int divi = 3;     	  //Divisiones por octavo
 bool gira[] = {0,0,0};    //Variable giro motor
 int premios[] = {2,6,8};  //Valor de los premios
 int monedas = 0;  	  //Premio monetario
 int vel = 2300;		  //Velocidad de giro de los motores (us/tic)
 int a = 7;		  //Secciones por tambor
-int b[] = {0,0,0};	  //us/rev max
+int b[] = {0,0,0};	  //us/rev por tambor
 
 // StepperMotor class is used to asynchronously
 // drive a stepper motor.  The motor is driven using
@@ -133,7 +132,7 @@ void Motor::doStep() {
 
 //Declarar motores
 Motor *m1 = NULL, *m2 = NULL, *m3 = NULL;
-Motor *mP = NULL
+Motor *mP = NULL;
 
 //Funcion interrupcion
 void interrupcion(){
@@ -150,8 +149,8 @@ void setup() {
   pinMode(botones[0],INPUT);
   pinMode(botones[1],INPUT);
   pinMode(botones[2],INPUT);
-  pinMode(sensorP,INPUT);
-  //Inicializar motores
+  pinMode(laserP,INPUT);
+  //Inicializar motores (configura pines)
   m1 = new Motor(motores[0],motores[1],motores[2],motores[3]);
   m1->setCycleDuration(vel);
   m2 = new Motor(motores[4],motores[5],motores[6],motores[7]);
@@ -230,7 +229,7 @@ void loop() {
   }
     //Arrancar motor
   while(pasta){
-    if(!sensorP){	//!Detectamos moneda
+    if(!laserP){	//!Detectamos moneda
       pasta --;
     }
     mP->tick();
