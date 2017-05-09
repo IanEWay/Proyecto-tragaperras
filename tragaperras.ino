@@ -1,26 +1,29 @@
 //Proyecto tragaperras
 
 //Pines
-int laser = 2;									//Pin detector moneda
-int LED = 3;										//Pin indicador LED
-int boton = 4;									//Pin boton comienzo
-int botones[] = {18,19,20};			//Pin botones de parada
+int laser = 2;					  //Pin detector moneda
+int LED = 3;					  //Pin indicador LED
+int boton = 4;					  //Pin boton comienzo
+int botones[] = {18,19,20};		  //Pin botones de parada
 int motores[] = {52,50,48,46,47,45,43,41,36,34,32,30};  //Pin motores 1,2,3
 int motorP[] = {9,10,11,12};		//Pin motor premio
 int encoders[] = {22,23,24};		//Pin encoders motores
-int laserP = 13;								//Pin sensor premio
+int laserP = 5;						//Pin sensor premio
 
 //Variables
-bool gira[] = {0,0,0};    //Variable giro motor
+bool gira[] = {0,0,0};	  //Control de encendido de motores
 int premios[] = {2,6,8};  //Valor de los premios
 
+bool temp = 1;//variable temporal de testeo
+
 int monedas = 0;  	  		//Premio monetario
-int vel = 2300;		  			//Velocidad de giro de los motores (us/tic)
-int a = 7;		  					//Secciones por tambor
+int vel = 73600;		  	//Velocidad de giro de los motores (us/tic)
+int a = 7;		  			//Secciones por tambor
 int b[] = {0,0,0};	  		//tic/rev por tambor
-int offset = 0;						//Ofset para ajustar la pos final
+int offset = 0;				//Ofset para ajustar la pos final
 int bmax = 0;	            //Tics maximos por rev
-int nTDE = {0,0,0};	      //Nuevos TDEs para el ajuste fino
+int nTDE[] = {0,0,0};	    //Nuevos TDEs para el ajuste fino
+int truco = 0;
 
 
 // StepperMotor class is used to asynchronously
@@ -139,17 +142,20 @@ void Motor::doStep() {
 Motor *m1 = NULL, *m2 = NULL, *m3 = NULL;
 Motor *mP = NULL;
 
-//Funcion interrupcion
+//Funcion interrupcion-----------------------------------------------------------------
 void interrupcion(){
-  if(bmax && bmax !=1){
+  if(bmax && (bmax!=1)){
     if(gira[0] && digitalRead(botones[0])){
       gira[0] = 0;
+temp = 0;
       if(!truco){
       	nTDE[0] = (m1->TDE) * a/bmax + 1;
 				if(nTDE[0] == 8){nTDE[0] = 1;}
       	nTDE[0] = nTDE[0] * bmax/a + offset;
+//nTDE[0] = 5;
+digitalWrite(LED,gira[0]);
       }else{nTDE[0] = bmax/a * truco + offset;}
-      m1->setCycleDuration(vel/2);
+      m1->setCycleDuration(vel*2);
     }else if(gira[1] && digitalRead(botones[1])){
       gira[1] = 0;
     	if(!truco){
@@ -157,7 +163,7 @@ void interrupcion(){
 				if(nTDE[1] == 8){nTDE[1] = 1;}
       	nTDE[1] = nTDE[1] * bmax/a + offset;
 			}else{nTDE[1] = bmax/a * truco + offset;}
-      m2->setCycleDuration(vel/2);
+      m2->setCycleDuration(vel*2);
     }else if(gira[2] && digitalRead(botones[2])){
       gira[2] = 0;
       if(!truco){
@@ -165,7 +171,7 @@ void interrupcion(){
 				if(nTDE[2] == 8){nTDE[2] = 1;}
       	nTDE[2] = nTDE[2] * bmax/a + offset;
 			}else{nTDE[2] = bmax/a * truco + offset;}
-      m3->setCycleDuration(vel/2);
+      m3->setCycleDuration(vel*2);
     }
   }
 }
@@ -184,23 +190,32 @@ void setup() {
   m2 = new Motor(motores[4],motores[5],motores[6],motores[7]);
   m3 = new Motor(motores[8],motores[9],motores[10],motores[11]);
   mP = new Motor(motorP[0],motorP[1],motorP[2],motorP[3]);
-  mP->setCicleDuration(vel/2);
+  mP->setCycleDuration(vel/2);
+  //Habilitar interrupciones
+  interrupts();
 }
 
 void loop() {
-	b = 0;
-  m1->setCycleDuration(vel);
+  //Reset de variables
+  b[0] = 0;		//Tics por rev
+  b[1] = 0;
+  b[2] = 0;
+  gira[0] = 1;    //Control encendido motores
+  gira[1] = 1;
+  gira[2] = 1;
+  m1->setCycleDuration(vel);	//Velocidades motor
   m2->setCycleDuration(vel);
   m3->setCycleDuration(vel);
-  // Detectar moneda
+delay(1000);  //Retardo de testeo
+/*  // Detectar moneda
   while(digitalRead(laser)){ //laser==0 -> moneda  
   }
-
+*/
   // LED + boton
   digitalWrite(LED,1);
-  while (digitalRead(!boton)){ //boton==1 -> empezar
+  while (!digitalRead(boton)){ //boton==1 -> empezar
   }
-  digitalWrite(LED,0);
+  //digitalWrite(LED,0);
   int truco = 0;
   if(digitalRead(botones[0])){truco = 1;}
   else if(digitalRead(botones[1])){truco = 2;}
@@ -212,41 +227,41 @@ void loop() {
   attachInterrupt(digitalPinToInterrupt(botones[2]),interrupcion,RISING);
   
   // Girar motores
-  gira = {1,1,1};    //Calcular posiciones finales
   while(gira[0] || gira[1] || gira[2]){
     //Girar motores
+digitalWrite(LED,gira[0]);
     if(gira[0]){m1->tick();}
-    else if(TDE != nTDE[0]){  //Correccion
+    else if(m1->TDE != nTDE[0]){  //Correccion---------------------------------------
       m1->tick();
     }
     if(gira[1]){m2->tick();}
-    else if(TDE != nTDE[1]){
+    else if(m2->TDE < nTDE[1]){
       m2->tick();
     }
     if(gira[2]){m3->tick();}
-    else if(TDE != nTDE[2]){
+    else if(m3->TDE < nTDE[2]){
       m3->tick();
     }
     delayMicroseconds(80);
     //Registrar encoders
-    if(!digitalRead(encoders[0]) && m1->TDE < 10000){
+    if(!digitalRead(encoders[0]) && m1->TDE > 5){
       if(b[0] == 0){b[0]=1;}
       else if(b[0] == 1){b[0] = m1->TDE;}
       m1->TDE = 0;
     }
-    if(!digitalRead(encoders[1]) && m2->TDE < 10000){
+/*    if(!digitalRead(encoders[1]) && m2->TDE < 100){
       if(b[1] == 0){b[1]=1;}
       else if(b[1] == 1){b[1] = m2->TDE;}
       m2->TDE = 0;
     }
-    if(!digitalRead(encoders[2]) && m3->TDE < 10000){
+    if(!digitalRead(encoders[2]) && m3->TDE < 100){
       if(b[2] == 0){b[2]=1;}
       else if(b[2] == 1){b[2] = m3->TDE;}
       m3->TDE = 0;
-    }
-		if(b[0] && b[1] && b[2] && !bmax){
-		  if(b[0]!=1 && b[1]=!1 && b[2]!=1){
-				bmax = (b[0]+b[1]+b[2])/3;
+    }*/
+		if(b[0] && !bmax){//b[1] && b[2] && !bmax){
+		  if(b[0]!=1 ){//&& b[1]!=1 && b[2]!=1){
+				bmax = b[0];//(b[0]+b[1]+b[2])/3;
 			}
 		}
   }
@@ -258,14 +273,14 @@ void loop() {
 	//Obtener posicion
   int pos[3];		//Cara final
 
-  int bmax = (b[0]+b[1]+b[2])/3;
+  //bmax = (b[0]+b[1]+b[2])/3;
   pos[0] = (m1->TDE) * a/bmax + 1;	//Posicion = tics * (caras/rev)/(tic/rev) + 1
   pos[1] = (m2->TDE) * a/bmax + 1;
   pos[2] = (m3->TDE) * a/bmax + 1;
-	for(i=0;i<=2;i++){if(pos[i]==8){pos[i]=1;}}	//Correccion
+	for(int i=0;i<=2;i++){if(pos[i]==8){pos[i]=1;}}	//Correccion
 
     //Repartir premios
-  int tablaP = [0,0,0,1,0,2,0];	//Fruta = 0, campana = 1, BAR = 2
+  int tablaP[] = {0,0,0,1,0,2,0};	//Fruta = 0, campana = 1, BAR = 2
   bool x = tablaP[pos[0]] == tablaP[pos[1]];
   bool y = tablaP[pos[1]] == tablaP[pos[2]];
   bool z = tablaP[pos[2]] == tablaP[pos[0]];
@@ -287,7 +302,7 @@ void loop() {
       pasta --;
     }
     mP->tick();
-    delayMicroseconds(100)
+    delayMicroseconds(100);
   }
 }
 
