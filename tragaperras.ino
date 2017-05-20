@@ -3,9 +3,9 @@
 //Pines
 int laser = 2;					  //Pin detector moneda
 int LED = 3;					  //Pin indicador LED
-int boton = 4;					  //Pin boton comienzo
+int boton = 5;					  //Pin boton comienzo
 int botones[] = {18,19,20};		  //Pin botones de parada
-int motores[] = {52,50,48,46,47,45,43,41,36,34,32,30};  //Pin motores 1,2,3
+int motores[] = {36,34,32,30,47,45,43,41,52,50,48,46};  //Pin motores 1,2,3
 int motorP[] = {9,10,11,12};	  //Pin motor premio
 int encoders[] = {22,23,24};	  //Pin encoders motores
 int laserP = 5;					  //Pin sensor premio
@@ -23,8 +23,6 @@ int bmax = 0;	            //Tics medios por rev
 int nTDE[] = {0,0,0};	    //Nuevos TDEs para el ajuste fino
 int truco = 0;
 bool reseteo = 1;			//Control de reset de ciertas variables
-int creditos = 5;			//Numero de creditos para realizar operaciones
-bool ajuste = 0;			//Control del ajuste fino
 
 
 // StepperMotor class is used to asynchronously
@@ -145,9 +143,9 @@ Motor *mP = NULL;
 
 //Funcion interrupcion-----------------------------------------------------------------
 void interrupcion(){
-  if(!ajuste){	//Parada motores
+truco = 1;
 		if(bmax && (bmax!=1)){
-			if(gira[0] && digitalRead(botones[0])){
+			if(gira[0] && !digitalRead(botones[0])){
 				gira[0] = 0;
 				if(!truco){
 					nTDE[0] = (m1->TDE) * a/bmax + 1;
@@ -155,7 +153,7 @@ void interrupcion(){
 					nTDE[0] = nTDE[0] * bmax/a + offset;
 				}else{nTDE[0] = bmax/a * truco + offset;}
 				m1->setCycleDuration(vel*2);
-			}else if(gira[1] && digitalRead(botones[1])){
+			}else if(gira[1] && !digitalRead(botones[1])){
 				gira[1] = 0;
 				if(!truco){
 					nTDE[1] = (m2->TDE) * a/bmax + 1;
@@ -163,7 +161,7 @@ void interrupcion(){
 					nTDE[1] = nTDE[1] * bmax/a + offset;
 				}else{nTDE[1] = bmax/a * truco + offset;}
 				m2->setCycleDuration(vel*2);
-			}else if(gira[2] && digitalRead(botones[2])){
+			}else if(gira[2] && !digitalRead(botones[2])){
 				gira[2] = 0;
 				if(!truco){
 					nTDE[2] = (m3->TDE) * a/bmax + 1;
@@ -173,26 +171,19 @@ void interrupcion(){
 				m3->setCycleDuration(vel*2);
 			}
 		}
-	}else{	//Ajuste fino
-		if(creditos > 0){
-			creditos--;
-			for(i=0;i++;i<=3){
-				if(digitalRead(botones[i])){
-					nTDE[i] += bmax/a;
-				}
-			}
-		}
-  }
 }
 
 void setup() {
   //Configurar pines
   pinMode(laser,INPUT);
   pinMode(LED,OUTPUT);
-  pinMode(boton,INPUT);
-  pinMode(botones[0],INPUT);
-  pinMode(botones[1],INPUT);
-  pinMode(botones[2],INPUT);
+  pinMode(boton,INPUT_PULLUP);
+  pinMode(botones[0],INPUT_PULLUP);
+  pinMode(botones[1],INPUT_PULLUP);
+  pinMode(botones[2],INPUT_PULLUP);
+  pinMode(encoders[0],INPUT);
+  pinMode(encoders[1],INPUT);
+  pinMode(encoders[2],INPUT);
   pinMode(laserP,INPUT);
   //Inicializar motores (configura pines)
   m1 = new Motor(motores[0],motores[1],motores[2],motores[3]);
@@ -216,6 +207,9 @@ void reset(){
   m1->setCycleDuration(vel);  //Velocidades motor
   m2->setCycleDuration(vel);
   m3->setCycleDuration(vel);
+  for(int i=0;i<=11;i++){
+    digitalWrite(motores[i],0);
+  }
 }
 
 void loop() {
@@ -224,42 +218,34 @@ void loop() {
     reseteo = 0;
     reset();
   }
-delay(1000);  //Retardo de testeo
+delay(2000);  //Retardo de testeo
   // LED + boton
-  while (!digitalRead(boton) && creditos > 0){ //boton==1 -> empezar
-	//Detectar moneda
-	while(digitalRead(laser)){ //laser==0 -> moneda
-		creditos++;
-	}
-	if(creditos){digitalWrite(LED,1);}
+  bool v = 1;
+  while (v){ //boton==1 -> empezar
+    v = digitalRead(boton);
+    digitalWrite(LED,1);
+    delay(1000);
   }
   digitalWrite(LED,0);
-  creditos--;
   
-  if(digitalRead(botones[0])){truco = 1;}
+/*  if(digitalRead(botones[0])){truco = 1;}
   else if(digitalRead(botones[1])){truco = 2;}
-  else if(digitalRead(botones[2])){truco = 3;}
+  else if(digitalRead(botones[2])){truco = 3;}*/
+  truco = 1;
   
   //Declarar interrupciones
-  attachInterrupt(digitalPinToInterrupt(botones[0]),interrupcion,RISING);
-  attachInterrupt(digitalPinToInterrupt(botones[1]),interrupcion,RISING);
-  attachInterrupt(digitalPinToInterrupt(botones[2]),interrupcion,RISING);
+  attachInterrupt(digitalPinToInterrupt(botones[0]),interrupcion,FALLING);
+  attachInterrupt(digitalPinToInterrupt(botones[1]),interrupcion,FALLING);
+  attachInterrupt(digitalPinToInterrupt(botones[2]),interrupcion,FALLING);
   
   // Girar motores
   while(gira[0] || gira[1] || gira[2] || m1->TDE!=nTDE[0] || m2->TDE!=nTDE[1] || m3->TDE!=nTDE[2]){
     //Girar motores
-    if(gira[0]){m1->tick();}
-    else if(m1->TDE != nTDE[0]){  //---------------------------------------
-      m1->tick();
-    }
-    if(gira[1]){m2->tick();}
-    else if(m2->TDE != nTDE[1]){
-      m2->tick();
-    }
-    if(gira[2]){m3->tick();}
-    else if(m3->TDE != nTDE[2]){
-      m3->tick();
-    }
+    if(gira[0] || (m1->TDE != nTDE[0])){m1->tick();}//---------------------------------------
+    
+    if(gira[1] || (m2->TDE != nTDE[1])){m2->tick();}
+
+    if(gira[2] || (m3->TDE != nTDE[2])){m3->tick();}
     delayMicroseconds(80);
     //Registrar encoders
     if(!digitalRead(encoders[0]) && m1->TDE > 5){
@@ -277,19 +263,12 @@ delay(1000);  //Retardo de testeo
       else if(b[2]){b[2] = m3->TDE;}
       m3->TDE = 0;
     }
-		if(b[0] b[1] && b[2] && !bmax){
+		if(b[0] && b[1] && b[2] && !bmax){
 		  if(b[0]!=1 && b[1]!=1 && b[2]!=1){
 				bmax = (b[0]+b[1]+b[2])/3;
 			}
 		}
   } //Fin giro motores
-  
-  //Ajuste fino
-  while(!digitalRead(boton) && creditos > 0){
-		if(m1->TDE != nTDE[0]){m1->tick();}
-		if(m2->TDE != nTDE[1]){m2->tick();}
-		if(m3->TDE != nTDE[2]){m3->tick();}
-  }
   
   //Desactivar interrupciones
   detachInterrupt(digitalPinToInterrupt(botones[0]));
@@ -332,6 +311,7 @@ digitalWrite(LED,1);
 delay(500);
 digitalWrite(LED,0);
 delay(500);
+pasta--;
   }
   reseteo = 1;
 }
