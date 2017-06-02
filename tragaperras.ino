@@ -30,23 +30,13 @@ bool ajuste = 0;							//Control del ajuste fino
 void interrupcion(){
   if(!ajuste){	//Parada motores
 		if(bmax && (bmax!=1)){
-			if(gira[0] && !digitalRead(botones[0])){				//Motor 1
-				gira[0] = 0;
-				nTDE[0] = (TDE[0]) * a/bmax + 1;
-				if(nTDE[0] == 8){nTDE[0] = 1;}
-				nTDE[0] = nTDE[0] * bmax/a + offset;
-
-			}else if(gira[1] && !digitalRead(botones[1])){	//Motor 2
-				gira[1] = 0;
-				nTDE[1] = (TDE[1]) * a/bmax + 1;
-				if(nTDE[1] == 8){nTDE[1] = 1;}
-				nTDE[1] = nTDE[1] * bmax/a + offset;
-
-			}else if(gira[2] && !digitalRead(botones[2])){	//Motor 3
-				gira[2] = 0;
-				nTDE[2] = (TDE[2]) * a/bmax + 1;
-				if(nTDE[2] == 8){nTDE[2] = 1;}
-				nTDE[2] = nTDE[2] * bmax/a + offset;
+			for(int i=0;i++;i<=3){
+				if(gira[i] && !digitalRead(botones[i])){	//¿Motor gira?
+					gira[i] = 0;														//Parar motor
+					nTDE[i] = TDE[i] * a/bmax + 1;					//Calcular cara a parar
+					if(nTDE[i] == 8){nTDE[i] = 1;}
+					nTDE[0] = nTDE[0] * bmax/a + offset;
+				}
 			}
 		}
 	}else{	//Ajuste fino
